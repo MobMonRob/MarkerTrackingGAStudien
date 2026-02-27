@@ -7,6 +7,13 @@ from algorithms.lvp import lotfusspunkt_verfahren
 from geometry.rays import ray_batch_from_to
 import argparse
 
+"""
+Script intendet to be run with:
+- xcp = camera-configs/recalibrated-config.xcp
+- markers =  csvdata/recalibrated/marker-dump-1-marker-cam-4-and-7.csv
+- centroids = csvdata/recalibrated/centroid-dump-1-marker-cam-4-and-7.csv
+"""
+
 parser = argparse.ArgumentParser("playground")
 parser.add_argument("-xcp", help="The path to the vicon .xcp config.", type=str)
 parser.add_argument("-centroids", help="The path to the centroids csv file.", type=str)
@@ -19,17 +26,19 @@ centroids_raw = csv_parser.load_centroid_data_raw(args.centroids)
 markers = csv_parser.load_known_markers(args.markers)
 
 # instanciate camera objects
-cams = []
+cams = {}
 for config in configs:
-    cams.append(from_params(config, csv_parser.centroids_for_camera_columns(centroids_raw, config.user_id)))
+    new_camera = from_params(config, csv_parser.centroids_for_camera_columns(centroids_raw, config.user_id))
+    cams[str(new_camera.user_id)] = new_camera
+    # cams.add(from_params(config, csv_parser.centroids_for_camera_columns(centroids_raw, config.user_id)))
 
 # visualisation of observed centroids on image plane
-plot_image_plane_grid(cams)
-plot_single_image_plane_figure(cams[1])
+plot_image_plane_grid(cams.values())
+plot_single_image_plane_figure(cams["6"])
 
 # visualisation of 3D scene
 fig, ax = scene.create_3d_figure()
-for camera in cams:
+for camera in cams.values():
     wcs_points = camera.get_all_wcs_points()
     scene.plot_camera(ax, camera)
 
@@ -37,12 +46,9 @@ for camera in cams:
 scene.scatter_3d_markers(ax, markers, color="green")
 
 # Render the computed points
-#cams uID = 3 & 6 actually see points
-#quick & very dirty -> should use sorting and/or map
-#for cam in cams:
-#    print(f"Index {cams.index(cam)}: {cam.user_id}")
-cam3 = cams[2]
-cam6 = cams[1]
+
+cam3 = cams["3"]
+cam6 = cams["6"]
 
 #print(f"Position {cam3.get_position()}, WCS POINT {cam6.get_position()}")
 
