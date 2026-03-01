@@ -9,9 +9,9 @@ import argparse
 
 """
 Script intendet to be run with:
-- xcp = camera-configs/recalibrated-config.xcp
-- markers =  csvdata/recalibrated/marker-dump-1-marker-all-cams.csv
-- centroids = csvdata/recalibrated/centroid-dump-1-marker-all-cams.csv 
+- xcp = camera-configs/experiment-1.xcp
+- markers =  csvdata/experiment-1/marker-dump-1-marker-all-cams.csv
+- centroids = csvdata/experiment-1/centroid-dump-1-marker-all-cams.csv 
 """
 
 parser = argparse.ArgumentParser("playground")
