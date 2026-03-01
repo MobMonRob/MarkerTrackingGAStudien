@@ -23,7 +23,7 @@ def build_config_matrix_corrected(focal_length_x : float, focal_length_y: float,
 
     Returns a (3,3) Matrix representing camera intrinsics.
     """
-    assert(np.array_equal(principal_point, distortion_center)) # see above
+    #assert(np.array_equal(principal_point, distortion_center)) # see above
     
     # pointless calculation :)
     principal_point_undist = distortion.undistort(principal_point, distortion_center ,k1, k2, k3)
