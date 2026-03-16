@@ -1,0 +1,6 @@
+.DS_STORE
+MarkerTrackingLA
+python-visual
+*.pyc
+.venv
+/target/
