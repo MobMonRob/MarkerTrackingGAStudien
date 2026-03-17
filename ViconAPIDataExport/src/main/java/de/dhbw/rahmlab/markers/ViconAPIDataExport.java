@@ -49,23 +49,30 @@ public class ViconAPIDataExport {
 
         String dump = csvCentroidDump(client);
         System.out.println(dump);
-
-        //String markerDump = csvTrackingObjectDump(client, "testobject");
-        //System.out.println("------");
-        //System.out.println(markerDump);
         
-        String markerDump = csvUnlabeledMarkerDump(client);
+        ArrayList<String> objects = new ArrayList();
+        objects.add("Wand");
+        objects.add("large-4-marker");
+
+        String markerDump = csvTrackingObjectDump(client, objects);
         System.out.println("------");
         System.out.println(markerDump);
         
+        System.out.println("Unlabeled Markers: " + client.getUnlabeledMarkerCount());
+        System.out.println("Labeled Markers for 'Wand': " + client.getMarkerCount("Wand"));
+        System.out.println("Labeled Markers for 'large-4-marker': " + client.getMarkerCount("large-4-marker"));
+        //String markerDump = csvUnlabeledMarkerDump(client);
+        //System.out.println("------");
+        //System.out.println(markerDump);
+        
         try {
-            saveCSV(markerDump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-5/marker-dump-6-markers-all-cams.csv", isoDateAndTime()));
+            saveCSV(markerDump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-4/marker-dump-5-markers-all-cams.csv", isoDateAndTime()));
         } catch (IOException ex) {
             System.getLogger(ViconAPIDataExport.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
 
         try {
-            saveCSV(dump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-5/centroid-dump-6-markers-all-cams.csv", isoDateAndTime()));
+            saveCSV(dump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-4/centroid-dump-5-markers-all-cams.csv", isoDateAndTime()));
         } catch (IOException ex) {
             System.getLogger(ViconAPIDataExport.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
@@ -83,14 +90,16 @@ public class ViconAPIDataExport {
         return sb.toString();
     }
 
-    public static String csvTrackingObjectDump(DataStreamClient client, String objectName) {
-
-        TrackingObject trackingObject = getTrackingObject(client, "testobject");
-
+    public static String csvTrackingObjectDump(DataStreamClient client, ArrayList<String> objectNames) {
+        
         StringBuilder sb = new StringBuilder();
-
-        sb.append(trackingObject.getCsvHeader()).append("\n");
-        sb.append(trackingObject.toCsv());
+        
+        sb.append(TrackingObject.getCsvHeader()).append("\n");
+        
+        for (String objectName : objectNames) {
+            TrackingObject trackingObject = getTrackingObject(client, objectName);
+            sb.append(trackingObject.toCsv());
+        }
 
         return sb.toString();
     }
