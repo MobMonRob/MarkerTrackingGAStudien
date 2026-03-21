@@ -10,18 +10,35 @@ from model.camera import Camera
 from matplotlib.colors import Normalize
 from geometry.rays import ray_batch_from_to
 
-def create_3d_figure() -> tuple[plt.Figure, plt.Axes]:
+def create_3d_figure(view_coordinates: bool = True) -> tuple[plt.Figure, plt.Axes]:
     
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
-    ax.set(xlim=(-1600, 2000), ylim=(-1500, 2000), zlim=(-2000, 2000))
-    ax.set_aspect('equal', 'box')
-
-    ax.set_title("Visualization of 3D Scene")
+    ax.set(xlim=(-1600, 2900), ylim=(-1500, 2000), zlim=(0, 2000))
+    ax.set_aspect('equal')
+    
+    if not view_coordinates:
+        disable_coordinates(ax)
 
     return fig, ax
 
-def plot_camera(ax: plt.Axes, camera: Camera, cameras_total: int = 13, scale_cam_coords_relative_to_focal: int = 3, cmap='tab20') -> None:
+def disable_coordinates(ax: plt.Axes):
+    # disable grid and ax numbering
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+
+    # hide every pane except floor
+    ax.xaxis.pane.set_visible(False)
+    ax.yaxis.pane.set_visible(False)
+    ax.zaxis.pane.set_visible(True)
+
+    # make axis transparent
+    ax.xaxis.line.set_color((0,0,0,0))
+    ax.yaxis.line.set_color((0,0,0,0))
+    ax.zaxis.line.set_color((0,0,0,0))
+
+def plot_camera(ax: plt.Axes, camera: Camera, cameras_total: int = 13, scale_cam_coords_relative_to_focal: int = 3, cmap=plt.cm.tab20) -> None:
     
     principal_ccs = camera.image_to_ccs(camera.get_principal_point())
     principal_ccs_scaled = principal_ccs * camera.get_focal_length_x()/scale_cam_coords_relative_to_focal
@@ -29,13 +46,12 @@ def plot_camera(ax: plt.Axes, camera: Camera, cameras_total: int = 13, scale_cam
 
     norm = Normalize(vmin=0, vmax=cameras_total - 1)
 
-    ax.scatter(*camera.get_position(), c=camera.user_id, cmap=cmap, s=30, marker='o', norm=norm)
+    ax.scatter(*camera.get_position(), c=camera.user_id, cmap=cmap, s=30, marker='o', norm=norm, label=camera.user_id)
     ax.scatter(*principal_wcs, c=camera.user_id, cmap=cmap, s=10, marker='o', norm=norm)
 
-    draw_virtual_image_plane(ax, camera, cameras_total, scale_cam_coords_relative_to_focal=scale_cam_coords_relative_to_focal)
+    draw_virtual_image_plane(ax, camera, cameras_total, scale_cam_coords_relative_to_focal=scale_cam_coords_relative_to_focal, cmap=cmap)
 
     norm = Normalize(vmin=0, vmax=cameras_total - 1)
-    cmap = plt.cm.tab20
     color = cmap(norm(camera.user_id))
 
     for wcs_point in camera.get_all_wcs_points():
@@ -43,7 +59,7 @@ def plot_camera(ax: plt.Axes, camera: Camera, cameras_total: int = 13, scale_cam
         ax.plot(ray[:, 0], ray[:, 1], ray[:, 2], color=color, linestyle='dashed')
 
 #TODO REWRITE!
-def draw_virtual_image_plane(ax: plt.Axes, camera: Camera, cameras_total: int = 13, scale_cam_coords_relative_to_focal: int = 3):
+def draw_virtual_image_plane(ax: plt.Axes, camera: Camera, cameras_total: int = 13, scale_cam_coords_relative_to_focal: int = 3, cmap = plt.cm.tab20):
     sensor_corners = []
 
     for i,j in [[0, 0], [0, 1088], [2048, 1088], [2048, 0]]:
@@ -59,13 +75,12 @@ def draw_virtual_image_plane(ax: plt.Axes, camera: Camera, cameras_total: int = 
     plane = Poly3DCollection(image_plane_verts, alpha=0.3, edgecolor='k')
     
     norm = Normalize(vmin=0, vmax=cameras_total - 1)
-    cmap = plt.cm.tab20
     color = cmap(norm(camera.user_id))
     
     plane.set_facecolor(color)
 
     ax.add_collection3d(plane)
 
-def scatter_3d_markers(ax: plt.Axes, points: List[Float[np.ndarray, "3 1"]], color="orange"):
+def scatter_3d_markers(ax: plt.Axes, points: List[Float[np.ndarray, "3 1"]], size=10, color="orange"):
     for point in points:
-        ax.scatter(*point, color=color, s = 10, marker='x')
+        ax.scatter(*point, color=color, s = size, marker='x')
