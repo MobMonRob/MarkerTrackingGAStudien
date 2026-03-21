@@ -26,7 +26,11 @@ def centroids_for_camera_columns(
 
     xs = rows["positionX"].astype(float)    # x values of all centroids detected
     ys = rows["positionY"].astype(float)    # y values for all centroids detected
-    return [_to_column_vector([x, y], 2) for x, y in zip(xs, ys)]
+    return [
+        _to_column_vector([x, y], 2)
+        for x, y in zip(xs, ys)
+        if not (np.isnan(x) or np.isnan(y))
+    ]
 
 def _load_marker_data_raw(csv_path: str, delimiter: str = ",") -> np.ndarray:
     """
