@@ -1,5 +1,25 @@
-.DS_STORE
-MarkerTrackingLA
-python-visual
-*.pyc
-.venv
+# macOS
+.DS_Store
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual environments
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Ignored subprojects
+MarkerTrackingLA/
+python-visual/

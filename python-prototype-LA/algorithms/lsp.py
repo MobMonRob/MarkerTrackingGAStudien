@@ -25,8 +25,8 @@ def approximate_intersect(points: List[Float[np.ndarray, "3 1"]], direction_vect
 
         # A_i = I - d_i*d_i^T
         A_i = np.eye(3) - d_i @ d_i.T
-        M = M + A_i
-
+        
+        M += A_i
         b += A_i @ p_i
     
     computed_point_x = np.linalg.solve(M, b)
