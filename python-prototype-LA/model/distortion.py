@@ -1,7 +1,9 @@
 import numpy as np
-from jaxtyping import Float
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 
-def undistort(point: Float[np.ndarray, "2 1"], distortion_center: Float[np.ndarray, "2 1"], k1: float, k2: float, k3: float, iterations = 4000) -> Float[np.ndarray, "2 1"]:
+@jaxtyped(typechecker=beartype)
+def undistort(point: Float[np.ndarray, "2 1"], distortion_center: Float[np.ndarray, "2 1"], principal_point: Float[np.ndarray, "2 1"], k1: float, k2: float, k3: float, iterations = 4000) -> Float[np.ndarray, "2 1"]:
     """
     Desperate attempt at getting the correct 2D-Pixel coordinate point via undistortion using the given params.
 

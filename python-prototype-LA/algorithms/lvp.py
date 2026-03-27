@@ -1,6 +1,7 @@
 from typing import Tuple
 import numpy as np
-from jaxtyping import Float
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 
 
 """ def lotfusspunkt_verfahren_diy(g: line, h: line) -> (np.array, np.array, np.array):
@@ -16,6 +17,7 @@ from jaxtyping import Float
     laufpunkt_h = h.p + mu * h.d
     return orthogonal_distance_vector, laufpunkt_g, laufpunkt_h """
 
+@jaxtyped(typechecker=beartype)
 def lotfusspunkt_verfahren(
     p_g: Float[np.ndarray, "3 1"],
     d_g: Float[np.ndarray, "3 1"],

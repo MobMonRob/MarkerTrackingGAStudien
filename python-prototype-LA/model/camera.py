@@ -10,8 +10,7 @@ import geometry.transforms as transforms
 class Camera():
     def __init__(self, user_id: int, 
                  config_matrix: Float[np.ndarray, "3 3"],
-                 config_matrix_corrected: Float[np.ndarray, "3 3"],
-                 extrinsic_matrix: Float[np.ndarray, "3 4"],
+                 extrinsic_matrix: Float[np.ndarray, "4 4"],
                  distortion_center: Float[np.ndarray, "2 1"],
                  k1: float,
                  k2: float,
@@ -22,7 +21,6 @@ class Camera():
         
         self.user_id = user_id
         self.config_matrix = config_matrix
-        self.config_matrix_corrected = config_matrix_corrected
         self.extrinsic_matrix = extrinsic_matrix
         self.distortion_center=distortion_center
         self.k1 = k1
@@ -46,20 +44,17 @@ class Camera():
     
     def image_to_ccs(self, centroid: Float[np.ndarray, "2 1"]) -> Float[np.ndarray, "3 1"]:
         centroid_homog = transforms.homogenize(centroid)
-        if(self.correct_distortion):
-            return np.linalg.inv(self.config_matrix_corrected) @ centroid_homog
-        else:
-            return np.linalg.inv(self.config_matrix) @ centroid_homog
+        return np.linalg.inv(self.config_matrix) @ centroid_homog
     
-    def ccs_to_wcs(self, ccs_point: Float[np.ndarray, "3 1"]) -> Float[np.ndarray, "3 1"]:
+    def ccs_to_wcs(self, ccs_point: Float[np.ndarray, "3 1"]) -> Float[np.ndarray, "4 1"]:
         ccs_homog = transforms.homogenize(ccs_point)
         return np.linalg.inv(self.extrinsic_matrix) @ ccs_homog
     
-    def get_centroids(self) -> List[Float[np.ndarray, "3 1"]]:
+    def get_centroids(self) -> List[Float[np.ndarray, "2 1"]]:
         if(self.correct_distortion):
             centroids_undistorted = []
             for centroid in self.centroids:
-                centroids_undistorted.append(distortion.undistort(centroid, self.distortion_center ,self.k1, self.k2, self.k3))
+                centroids_undistorted.append(distortion.undistort(centroid, self.distortion_center, self.get_principal_point() ,self.k1, self.k2, self.k3))
             return centroids_undistorted
         else:
             return self.centroids
@@ -71,12 +66,8 @@ class Camera():
         return self.config_matrix[1, 1]
 
     def get_principal_point(self) -> Float[np.ndarray, "2 1"]:
-        if self.correct_distortion:
-            principal_x = self.config_matrix_corrected[0, 2]
-            principal_y = self.config_matrix_corrected[1, 2]
-        else:
-            principal_x = self.config_matrix[0, 2]
-            principal_y = self.config_matrix[1, 2]
+        principal_x = self.config_matrix[0, 2]
+        principal_y = self.config_matrix[1, 2]
         return np.array([[principal_x],[principal_y]])
 
     def get_position(self) -> Float[np.ndarray, "3 1"]:
@@ -86,6 +77,12 @@ class Camera():
 
     def get_rotation_matrix(self) -> Float[np.ndarray, "3 3"]:
         return self.extrinsic_matrix[:3, :3]
+
+    def project(self, point_wcs: Float[np.ndarray, "3 1"]) -> Float[np.ndarray, "2 1"]:
+        """Project a 3D world-coordinate point onto the image plane, returning a 2D pixel coordinate."""
+        point_ccs = self.extrinsic_matrix @ transforms.homogenize(point_wcs)
+        point_img_h = self.config_matrix @ point_ccs[:3]
+        return transforms.dehomogenize(point_img_h)
 
 def from_params(config: CameraConfig, centroids: List[Float[np.ndarray, "2 1"]]) -> Camera:
     """
@@ -106,13 +103,11 @@ def from_params(config: CameraConfig, centroids: List[Float[np.ndarray, "2 1"]])
     focal_length_y = float(config.focal_length)
     
     config_matrix = calibration.build_config_matrix(focal_length_x, focal_length_y, config.principal_point)
-    config_matrix_corrected = calibration.build_config_matrix_corrected(focal_length_x, focal_length_y, config.principal_point, config.distortion_center, config.k1, config.k2, config.k3)
     extrinsic_matrix = calibration.build_extrinsic_matrix(rotation_matrix, config.position)
 
     return Camera(
         user_id=config.user_id,
         config_matrix=config_matrix,
-        config_matrix_corrected=config_matrix_corrected,
         extrinsic_matrix=extrinsic_matrix,
         distortion_center=config.distortion_center,
         k1=config.k1,

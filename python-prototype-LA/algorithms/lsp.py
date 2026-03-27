@@ -1,8 +1,10 @@
 from typing import Tuple, List
 import numpy as np
-from jaxtyping import Float
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 
-def approximate_intersect(points: List[Float[np.ndarray, "3 1"]], direction_vectors: List[Float[np.ndarray, "3 1"]]):
+@jaxtyped(typechecker=beartype)
+def approximate_intersect(points: List[Float[np.ndarray, "3 1"]], direction_vectors: List[Float[np.ndarray, "3 1"]]) -> Float[np.ndarray, "3 1"]:
     """
     Compute the point minimising the squared distance between n lines.
 

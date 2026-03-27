@@ -1,7 +1,9 @@
 import numpy as np
-from jaxtyping import Float
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 
-def homogenize(vec: Float[np.ndarray, "N 1"], w: float = 1.0) -> np.ndarray:
+@jaxtyped(typechecker=beartype)
+def homogenize(vec: Float[np.ndarray, "N 1"], w: float = 1.0) -> Float[np.ndarray, "N+1 1"]:
     """
     Generic homogenization: append a homogeneous coordinate w to an N×1 column vector.
     Convert a N×1 Euclidean column vector to a N+1×1 homogeneous column vector
@@ -14,6 +16,7 @@ def homogenize(vec: Float[np.ndarray, "N 1"], w: float = 1.0) -> np.ndarray:
     return np.vstack([arr, np.array([[float(w)]], dtype=float)])
 
 
+@jaxtyped(typechecker=beartype)
 def dehomogenize(vec_h: Float[np.ndarray, "N 1"]) -> Float[np.ndarray, "N-1 1"]:
     """
     Dehomogenize an N×1 homogeneous column vector to an (N-1)×1 Euclidean column vector

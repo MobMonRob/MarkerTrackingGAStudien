@@ -1,6 +1,8 @@
 import numpy as np
-from jaxtyping import Float
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 
+@jaxtyped(typechecker=beartype)
 def ray_from_to(
     p_from: Float[np.ndarray, "3 1"],
     p_to: Float[np.ndarray, "3 1"],
@@ -14,6 +16,7 @@ def ray_from_to(
 
     return origin + float(t) * (target - origin)
 
+@jaxtyped(typechecker=beartype)
 def ray_batch_from_to(
     p_from: Float[np.ndarray, "3 1"],
     p_to: Float[np.ndarray, "3 1"],
