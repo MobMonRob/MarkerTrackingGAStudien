@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import numpy as np
 from jaxtyping import Float
-from typing import List
+from typing import List, Tuple, Dict
 from iotools.camera_config_parser import CameraConfig
 from scipy.spatial.transform import Rotation as R
 import model.calibration as calibration
@@ -29,6 +31,18 @@ class Camera():
         self.sensor_xy=sensor_xy
         self.centroids = centroids
         self.correct_distortion = correct_distortion
+        self.correspondences: Dict[int, List[Tuple[int, int, float]]] = {}  # Maps centroid index to list of (other_camera_id, other_centroid_idx, epipolar_distance) tuples
+
+        self.init_correspondences()
+
+    def init_correspondences(self):
+        # Initialize correspondences with empty lists for each centroid index
+        for i in range(len(self.centroids)):
+            self.correspondences[i] = []
+
+    def get_centroids_map(self) -> Dict[int, Float[np.ndarray, "2 1"]]:
+        """Return a mapping from centroid index to (optionally undistorted) centroid."""
+        return {i: c for i, c in enumerate(self.get_centroids())}
 
     def get_all_wcs_points(self) -> List[Float[np.ndarray, "3 1"]]:
         wcs_points = []
@@ -83,6 +97,60 @@ class Camera():
         point_ccs = self.extrinsic_matrix @ transforms.homogenize(point_wcs)
         point_img_h = self.config_matrix @ point_ccs[:3]
         return transforms.dehomogenize(point_img_h)
+    
+    def compute_epipolar_line(self, other_camera: Camera, other_centroid: Float[np.ndarray, "2 1"]) -> Tuple[Float[np.ndarray, "2 1"], Float[np.ndarray, "2 1"]]:
+        """
+        Compute the epipolar line parameters p and d for the epipolar line p + lambda * d in this camera's image plane.
+        
+        Takes the other camera and a centroid as observed by the other camera.
+        """
+        epipole = self.project(other_camera.get_position())
+        point_wcs = other_camera.ccs_to_wcs(other_camera.image_to_ccs(other_centroid))
+        point_pixel = self.project(transforms.dehomogenize(point_wcs))
+        direction = point_pixel - epipole
+
+        return epipole, direction
+
+    def closest_centroid(self, epipole: Float[np.ndarray, "2 1"], direction: Float[np.ndarray, "2 1"]) -> Tuple[int, float]:
+        """
+        Find the centroid closest to the epipolar line defined by epipole and direction. 
+
+        Returns the index of the closest centroid and its distance to the epipolar line.
+        """
+        min_distance = float('inf')
+        closest_idx = None
+        d = direction.flatten()
+
+        for i, centroid in enumerate(self.get_centroids()):
+            v = centroid.flatten() - epipole.flatten()
+            _lambda = np.dot(v, d) / np.dot(d, d)
+            distance = np.linalg.norm(epipole.flatten() + _lambda * d - centroid.flatten())
+            if distance < min_distance:
+                min_distance = distance
+                closest_idx = i
+
+        return closest_idx, min_distance
+
+    def compute_correspondences_with(self, other_camera: Camera, max_dist: float = 1.) -> None:
+        """
+        Compute correspondences between this camera and another camera by finding the closest centroid to the epipolar line for each point observed by the other camera.
+
+        Stores results in self.correspondences as a mapping from this camera's centroids to lists of (other_camera_id, other_centroid) pairs.
+        """
+        for other_idx, other_centroid in other_camera.get_centroids_map().items():
+            epipole, direction = self.compute_epipolar_line(other_camera, other_centroid)
+            closest_idx, distance = self.closest_centroid(epipole, direction)
+
+            # #enforcing bidirectionality
+            # if closest_idx is not None:  
+            #     epipole, direction = other_camera.compute_epipolar_line(self, self.get_centroids_map()[closest_idx])  
+            #     closest_index_other, distance_other = other_camera.closest_centroid(epipole, direction)
+            # else: 
+            #     continue
+
+            #if closest_index_other == other_idx and distance <= max_dist and distance_other <= max_dist:
+            if closest_idx is not None and distance <= max_dist: 
+                self.correspondences[closest_idx].append((other_camera.user_id, other_idx, distance))
 
 def from_params(config: CameraConfig, centroids: List[Float[np.ndarray, "2 1"]]) -> Camera:
     """

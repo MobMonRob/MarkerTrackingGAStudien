@@ -66,13 +66,13 @@ public class ViconAPIDataExport {
         //System.out.println(markerDump);
         
         try {
-            saveCSV(markerDump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-4/marker-dump-5-markers-all-cams.csv", isoDateAndTime()));
+            saveCSV(markerDump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-4/marker-dump-9-markers-all-cams.csv", isoDateAndTime()));
         } catch (IOException ex) {
             System.getLogger(ViconAPIDataExport.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
 
         try {
-            saveCSV(dump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-4/centroid-dump-5-markers-all-cams.csv", isoDateAndTime()));
+            saveCSV(dump, String.format("/home/rahm-lab/Desktop/MarkerTrackingGAStudien/csvdata/experiment-4/centroid-dump-9-markers-all-cams.csv", isoDateAndTime()));
         } catch (IOException ex) {
             System.getLogger(ViconAPIDataExport.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
