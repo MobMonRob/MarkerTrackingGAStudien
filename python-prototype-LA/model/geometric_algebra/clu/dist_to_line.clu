@@ -1,0 +1,18 @@
+/*
+  Function dist_to_line
+  Input: 
+    - coefficients of epipolar line: line_e01, line_e02, line_e03, line_e12, line_e13, line_e23 in WCS
+    - 2D centroid: cent_x, cent_y, cent_z on the image plane of the camera in the WCS
+  Output:
+    - orthogonal distance of centroid to line: dist 
+*/
+
+cent_wcs = createPoint(cent_x, cent_y, cent_z);
+epipolar_line = line_e01 * e0 ^ e1 + line_e02 * e0 ^ e2 + line_e03 * e0 ^ e3 + line_e12 * e1 ^ e2 + line_e13 * e1 ^ e3 + line_e23 * e2 ^ e3; 
+
+plane_representing_dist = *(*Normalize(cent_wcs) ^ *Normalize(epipolar_line));
+
+a = coefficient(plane_representing_dist, e1);
+b = coefficient(plane_representing_dist, e2);
+c = coefficient(plane_representing_dist, e3);
+?dist = sqrt(a*a + b*b + c*c);

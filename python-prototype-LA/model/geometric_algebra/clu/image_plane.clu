@@ -1,0 +1,33 @@
+ /*
+  Function create_image_plane
+  Input: 
+    - Focal length f, 
+    - rotation quaternion x, y, z, w
+    - translation t_x, t_y, t_z (Camera position in WCS)
+    - principal point p_x, p_y
+
+  Output:
+    - plane in WCS coefficients a, b, c, d
+    - principal point in WCS coefficients principal_x, principal_w, principal_z
+  */
+
+  plane_local = e3 - f * e0;
+  principal_local = createPoint(p_x, p_y, f);
+
+  rotor = x * e2^e3 + y * e3^e1 + z * e1^e2 + w;
+  translator = 1 - 0.5 * (t_x * e0^e1 + t_y * e0^e2 + t_z * e0^e3);
+
+  motor = translator * rotor;
+
+  plane_world = motor * plane_local * ~motor;
+  principal_point_world = motor * principal_local * ~motor;
+  
+  weight = coefficient(principal_point_world, e1^e2^e3);
+  ?principal_x = coefficient(principal_point_world, e0^e3^e2) / weight;
+  ?principal_y = coefficient(principal_point_world, e0^e1^e3) / weight;
+  ?principal_z = coefficient(principal_point_world, e0^e2^e1) / weight;
+
+  ?plane_offset = coefficient(plane_world, e0);
+  ?plane_normal_x = coefficient(plane_world, e1);
+  ?plane_normal_y = coefficient(plane_world, e2);
+  ?plane_normal_z = coefficient(plane_world, e3);

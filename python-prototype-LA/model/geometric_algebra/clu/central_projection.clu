@@ -1,0 +1,21 @@
+  /*
+  Function central_projection
+  Input: 
+    - point px, py, pz in WCS
+    - camera position o_x, o_y, o_z in WCS
+    - image plane normal_x, normal_y, normal_z, offset
+  Output:
+    - intersection point intersect_x, intersect_y, intersect_z in WCS
+  */
+
+  point_world = createPoint(px, py, pz);
+  camera_position = createPoint(o_x, o_y, o_z);
+  plane = normal_x * e1 + normal_y * e2 + normal_z * e3 + offset * e0;
+
+  line_of_sight = *(*point_world ^ *camera_position); //join via regressive product
+
+  intersection = line_of_sight ^ plane; //meet via wedge product
+  w = coefficient(intersection, e1^e2^e3)
+  ?intersect_x = coefficient(intersection, e0^e3^e2) / w;
+  ?intersect_y = coefficient(intersection, e0^e1^e3) / w;
+  ?intersect_z = coefficient(intersection, e0^e2^e1) / w;

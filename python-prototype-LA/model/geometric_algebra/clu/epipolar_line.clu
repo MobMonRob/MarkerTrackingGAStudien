@@ -1,0 +1,33 @@
+/*
+  Function epipolar_line
+  Input: 
+    - Focal length: f of camera A
+    - rotation quaternion: x, y, z, w of camera A
+    - principal point: p_x, p_y of camera a
+    - image plane: normal_A_x, normal_A_y, normal_A_z, offset_A for camera A
+    - image plane: normal_B_x, normal_B_y, normal_B_z, offset_B for camera b
+    - 2D centroid: cent_x, cent_y in the pixel coordinates of Camera A
+  Output:
+    - coefficients of epipolar line in B line_e01, line_e02, line_e03, line_e12, line_e13, line_e23
+*/
+
+cent_img = createPoint(cent_x - p_x, cent_y - p_y, f); //Undo pixel coord conversion
+rotor = x * e2^e3 + y * e3^e1 + z * e1^e2 + w;
+translator = 1 - 0.5 * (a_x * e0^e1 + a_y * e0^e2 + a_z * e0^e3);
+motor = translator * rotor;
+cent_wcs = motor * cent_img * ~motor; //move onto WCS image plane 
+
+pos_A = createPoint(a_x, a_y, a_z);
+pos_B = createPoint(b_x, b_y, b_z);
+epipolar_plane = *(*pos_A ^ *cent_wcs ^ *pos_B); //Plane via join 
+
+image_plane_B = normal_B_x * e1 + normal_B_y * e2 + normal_B_z * e3 + offset_B * e0;
+
+epipolar_line_in_b = image_plane_B ^ epipolar_plane; //Line via meet
+
+?line_e01 = coefficient(epipolar_line_in_b, e0^e1);
+?line_e02 = coefficient(epipolar_line_in_b, e0^e2);
+?line_e03 = coefficient(epipolar_line_in_b, e0^e3);
+?line_e12 = coefficient(epipolar_line_in_b, e1^e2);
+?line_e13 = coefficient(epipolar_line_in_b, e1^e3);
+?line_e23 = coefficient(epipolar_line_in_b, e2^e3);
