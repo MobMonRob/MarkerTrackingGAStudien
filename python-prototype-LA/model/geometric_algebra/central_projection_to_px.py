@@ -1,0 +1,40 @@
+import numpy as np
+def central_projection_to_px(normal_x, normal_y, normal_z, o_x, o_y, o_z, offset, pp_x, pp_y, px, py, pz, w, x, y, z):
+	point_world = np.zeros(16)
+	point_world[11] = (-pz) # e0 ^ (e1 ^ e2)
+	point_world[13] = (-px) # e0 ^ (e2 ^ e3)
+	camera_position = np.zeros(16)
+	camera_position[11] = (-o_z) # e0 ^ (e1 ^ e2)
+	camera_position[13] = (-o_x) # e0 ^ (e2 ^ e3)
+	line_of_sight = np.zeros(16)
+	line_of_sight[5] = py * (-camera_position[11]) + (-((-point_world[11]) * o_y)) # e0 ^ e1
+	line_of_sight[6] = (-((-point_world[13]) * (-camera_position[11]) + (-((-point_world[11]) * (-camera_position[13]))))) # e0 ^ e2
+	line_of_sight[7] = (-point_world[13]) * o_y + (-(py * (-camera_position[13]))) # e0 ^ e3
+	line_of_sight[8] = (-camera_position[11]) + point_world[11] # e1 ^ e2
+	line_of_sight[9] = (-(o_y + (-py))) # e1 ^ e3
+	line_of_sight[10] = (-camera_position[13]) + point_world[13] # e2 ^ e3
+	intersection = np.zeros(16)
+	intersection[11] = line_of_sight[5] * normal_y + (-(line_of_sight[6] * normal_x)) + line_of_sight[8] * offset # e0 ^ (e1 ^ e2)
+	intersection[12] = line_of_sight[5] * normal_z + (-(line_of_sight[7] * normal_x)) + line_of_sight[9] * offset # e0 ^ (e1 ^ e3)
+	intersection[13] = line_of_sight[6] * normal_z + (-(line_of_sight[7] * normal_y)) + line_of_sight[10] * offset # e0 ^ (e2 ^ e3)
+	intersection[14] = line_of_sight[8] * normal_z + (-(line_of_sight[9] * normal_y)) + line_of_sight[10] * normal_x # e1 ^ (e2 ^ e3)
+	rotor = np.zeros(16)
+	rotor[9] = (-y) # e1 ^ e3
+	translator = np.zeros(16)
+	translator[5] = (-(o_x / 2.0)) # e0 ^ e1
+	translator[6] = (-(o_y / 2.0)) # e0 ^ e2
+	translator[7] = (-(o_z / 2.0)) # e0 ^ e3
+	motor = np.zeros(16)
+	motor[5] = translator[5] * w + (-(translator[6] * z)) + (-(translator[7] * rotor[9])) # e0 ^ e1
+	motor[6] = translator[5] * z + translator[6] * w + (-(translator[7] * x)) # e0 ^ e2
+	motor[7] = translator[5] * rotor[9] + translator[6] * x + translator[7] * w # e0 ^ e3
+	motor[15] = translator[5] * x + (-(translator[6] * rotor[9])) + translator[7] * z # e0 ^ (e1 ^ (e2 ^ e3))
+	intersection_ccs = np.zeros(16)
+	intersection_ccs[12] = ((-((-z) * intersection[11])) + (-((-rotor[9]) * intersection[12])) + (-((-x) * intersection[13])) + (-(motor[15] * intersection[14]))) * rotor[9] + (-((-((-x) * intersection[14])) * motor[7])) + (-rotor[9]) * intersection[14] * motor[15] + (-((-z) * intersection[14])) * motor[5] + (w * intersection[11] + (-motor[7]) * intersection[14] + (-((-rotor[9]) * intersection[13])) + (-x) * intersection[12]) * x + (w * intersection[12] + (-((-motor[6]) * intersection[14])) + (-z) * intersection[13] + (-((-x) * intersection[11]))) * w + (-((w * intersection[13] + (-motor[5]) * intersection[14] + (-((-z) * intersection[12])) + (-rotor[9]) * intersection[11]) * z)) + w * intersection[14] * motor[6] # e0 ^ (e1 ^ e3)
+	intersection_ccs[13] = ((-((-z) * intersection[11])) + (-((-rotor[9]) * intersection[12])) + (-((-x) * intersection[13])) + (-(motor[15] * intersection[14]))) * x + (-((-((-x) * intersection[14])) * motor[15])) + (-((-rotor[9]) * intersection[14] * motor[7])) + (-((-z) * intersection[14])) * motor[6] + (-((w * intersection[11] + (-motor[7]) * intersection[14] + (-((-rotor[9]) * intersection[13])) + (-x) * intersection[12]) * rotor[9])) + (w * intersection[12] + (-((-motor[6]) * intersection[14])) + (-z) * intersection[13] + (-((-x) * intersection[11]))) * z + (w * intersection[13] + (-motor[5]) * intersection[14] + (-((-z) * intersection[12])) + (-rotor[9]) * intersection[11]) * w + (-(w * intersection[14] * motor[5])) # e0 ^ (e2 ^ e3)
+	intersection_ccs[14] = (-((-x) * intersection[14])) * x + (-((-rotor[9]) * intersection[14] * rotor[9])) + (-((-z) * intersection[14])) * z + w * intersection[14] * w # e1 ^ (e2 ^ e3)
+	intersection_u = np.zeros(16)
+	intersection_u[0] = (-intersection_ccs[13]) * intersection_ccs[14] / (intersection_ccs[14] * intersection_ccs[14]) + pp_x # 1.0
+	intersection_v = np.zeros(16)
+	intersection_v[0] = intersection_ccs[12] * intersection_ccs[14] / (intersection_ccs[14] * intersection_ccs[14]) + pp_y # 1.0
+	return intersection_u, intersection_v

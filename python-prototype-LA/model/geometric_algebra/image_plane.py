@@ -1,0 +1,43 @@
+import numpy as np
+def create_image_plane(f, p_x, p_y, t_x, t_y, t_z, w, x, y, z):
+	plane_local = np.zeros(16)
+	plane_local[1] = (-f) # e0
+	principal_local = np.zeros(16)
+	principal_local[11] = (-f) # e0 ^ (e1 ^ e2)
+	principal_local[13] = (-p_x) # e0 ^ (e2 ^ e3)
+	rotor = np.zeros(16)
+	rotor[9] = (-y) # e1 ^ e3
+	translator = np.zeros(16)
+	translator[5] = (-(t_x / 2.0)) # e0 ^ e1
+	translator[6] = (-(t_y / 2.0)) # e0 ^ e2
+	translator[7] = (-(t_z / 2.0)) # e0 ^ e3
+	motor = np.zeros(16)
+	motor[5] = translator[5] * w + (-(translator[6] * z)) + (-(translator[7] * rotor[9])) # e0 ^ e1
+	motor[6] = translator[5] * z + translator[6] * w + (-(translator[7] * x)) # e0 ^ e2
+	motor[7] = translator[5] * rotor[9] + translator[6] * x + translator[7] * w # e0 ^ e3
+	motor[15] = translator[5] * x + (-(translator[6] * rotor[9])) + translator[7] * z # e0 ^ (e1 ^ (e2 ^ e3))
+	plane_world = np.zeros(16)
+	plane_world[1] = (w * plane_local[1] + motor[7]) * w + (-(rotor[9] * (-motor[5]))) + (-(x * (-motor[6]))) + (-(w * (-motor[7]))) + (-((z * plane_local[1] + motor[15]) * (-z))) + (-((motor[5] + rotor[9] * plane_local[1]) * (-rotor[9]))) + (-((motor[6] + x * plane_local[1]) * (-x))) + z * motor[15] # e0
+	plane_world[2] = rotor[9] * w + (-(x * (-z))) + (-(w * (-rotor[9]))) + (-(z * (-x))) # e1
+	plane_world[3] = rotor[9] * (-z) + x * w + (-(w * (-x))) + z * (-rotor[9]) # e2
+	plane_world[4] = rotor[9] * (-rotor[9]) + x * (-x) + w * w + (-(z * (-z))) # e3
+	principal_point_world = np.zeros(16)
+	principal_point_world[11] = ((-(z * principal_local[11])) + (-(rotor[9] * p_y)) + (-(x * principal_local[13])) + (-motor[15])) * (-z) + (-((-x) * (-motor[6]))) + rotor[9] * (-motor[5]) + (-((-z) * motor[15])) + (w * principal_local[11] + motor[7] + (-(rotor[9] * principal_local[13])) + x * p_y) * w + (-((w * p_y + (-motor[6]) + z * principal_local[13] + (-(x * principal_local[11]))) * (-x))) + (w * principal_local[13] + motor[5] + (-(z * p_y)) + rotor[9] * principal_local[11]) * (-rotor[9]) + (-(w * (-motor[7]))) # e0 ^ (e1 ^ e2)
+	principal_point_world[12] = ((-(z * principal_local[11])) + (-(rotor[9] * p_y)) + (-(x * principal_local[13])) + (-motor[15])) * (-rotor[9]) + (-((-x) * (-motor[7]))) + rotor[9] * motor[15] + (-z) * (-motor[5]) + (w * principal_local[11] + motor[7] + (-(rotor[9] * principal_local[13])) + x * p_y) * (-x) + (w * p_y + (-motor[6]) + z * principal_local[13] + (-(x * principal_local[11]))) * w + (-((w * principal_local[13] + motor[5] + (-(z * p_y)) + rotor[9] * principal_local[11]) * (-z))) + w * (-motor[6]) # e0 ^ (e1 ^ e3)
+	principal_point_world[13] = ((-(z * principal_local[11])) + (-(rotor[9] * p_y)) + (-(x * principal_local[13])) + (-motor[15])) * (-x) + (-((-x) * motor[15])) + (-(rotor[9] * (-motor[7]))) + (-z) * (-motor[6]) + (-((w * principal_local[11] + motor[7] + (-(rotor[9] * principal_local[13])) + x * p_y) * (-rotor[9]))) + (w * p_y + (-motor[6]) + z * principal_local[13] + (-(x * principal_local[11]))) * (-z) + (w * principal_local[13] + motor[5] + (-(z * p_y)) + rotor[9] * principal_local[11]) * w + (-(w * (-motor[5]))) # e0 ^ (e2 ^ e3)
+	principal_point_world[14] = (-x) * (-x) + (-(rotor[9] * (-rotor[9]))) + (-z) * (-z) + w * w # e1 ^ (e2 ^ e3)
+	principal_x = np.zeros(16)
+	principal_x[0] = (-principal_point_world[13]) * principal_point_world[14] / (principal_point_world[14] * principal_point_world[14]) # 1.0
+	principal_y = np.zeros(16)
+	principal_y[0] = principal_point_world[12] * principal_point_world[14] / (principal_point_world[14] * principal_point_world[14]) # 1.0
+	principal_z = np.zeros(16)
+	principal_z[0] = (-principal_point_world[11]) * principal_point_world[14] / (principal_point_world[14] * principal_point_world[14]) # 1.0
+	plane_offset = np.zeros(16)
+	plane_offset[0] = plane_world[1] # 1.0
+	plane_normal_x = np.zeros(16)
+	plane_normal_x[0] = plane_world[2] # 1.0
+	plane_normal_y = np.zeros(16)
+	plane_normal_y[0] = plane_world[3] # 1.0
+	plane_normal_z = np.zeros(16)
+	plane_normal_z[0] = plane_world[4] # 1.0
+	return plane_normal_x, plane_normal_y, plane_normal_z, plane_offset, principal_x, principal_y, principal_z

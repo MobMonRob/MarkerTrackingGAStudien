@@ -9,10 +9,10 @@
     - orthogonal distance of centroid to line: dist 
 */
 
-cent_wcs = createPoint(cent_x - pp_x, cent_y - pp_y, f);
+cent_local = createPoint(cent_x - pp_x, cent_y - pp_y, f);
 epipolar_line = line_e01 * e0 ^ e1 + line_e02 * e0 ^ e2 + line_e03 * e0 ^ e3 + line_e12 * e1 ^ e2 + line_e13 * e1 ^ e3 + line_e23 * e2 ^ e3; 
 
-plane_representing_dist = *(*Normalize(cent_wcs) ^ *Normalize(epipolar_line));
+plane_representing_dist = *(*Normalize(cent_local) ^ *Normalize(epipolar_line));
 
 a = coefficient(plane_representing_dist, e1);
 b = coefficient(plane_representing_dist, e2);
